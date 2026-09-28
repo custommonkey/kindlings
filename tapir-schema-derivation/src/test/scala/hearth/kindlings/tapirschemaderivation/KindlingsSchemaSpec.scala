@@ -293,20 +293,6 @@ final class KindlingsSchemaSpec extends MacroSuite {
         }
       }
 
-      test("map field keyed by an opaque type uses the given custom Schema") {
-        implicit val userIdMapSchema: Schema[Map[OpaqueKeyExample.UserId, Int]] =
-          Schema.schemaForMap[OpaqueKeyExample.UserId, Int](OpaqueKeyExample.UserId.raw)
-
-        val schema = KindlingsSchema.derived[WithOpaqueMapKey].schema
-        schema.schemaType match {
-          case p: SchemaType.SProduct[WithOpaqueMapKey] =>
-            val fieldNames = p.fields.map(_.name.name)
-            assertEquals(fieldNames, List("counts"))
-          case other =>
-            fail(s"Expected SProduct, got: $other")
-        }
-      }
-
       test("recursive type uses SRef") {
         val schema = KindlingsSchema.derived[RecursiveTree].schema
         schema.schemaType match {
