@@ -293,6 +293,20 @@ final class KindlingsSchemaSpec extends MacroSuite {
         }
       }
 
+      test("map field keyed by a non-String newtype uses the given custom Schema") {
+        implicit val newtypeUserIdMapSchema: Schema[Map[NewtypeUserId, Int]] =
+          Schema.schemaForMap[NewtypeUserId, Int](_.value)
+
+        val schema = KindlingsSchema.derived[WithNewtypeMapKey].schema
+        schema.schemaType match {
+          case p: SchemaType.SProduct[WithNewtypeMapKey] =>
+            val fieldNames = p.fields.map(_.name.name)
+            assertEquals(fieldNames, List("counts"))
+          case other =>
+            fail(s"Expected SProduct, got: $other")
+        }
+      }
+
       test("recursive type uses SRef") {
         val schema = KindlingsSchema.derived[RecursiveTree].schema
         schema.schemaType match {

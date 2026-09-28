@@ -34,6 +34,15 @@ case class WithCollections(tags: List[String], counts: Vector[Int])
 
 case class WithMap(metadata: Map[String, String])
 
+// A value-class newtype is not a subtype of its wrapped type in either Scala
+// 2 or 3, so `NewtypeUserId` below is a non-String key from the derivation
+// macro's point of view -- same shape as an opaque type, but expressible in
+// shared (cross-compiled) source. Exercises the same fix as the Scala-3-only
+// `OpaqueKeyExample`/`OpaqueMapKeySpec`, but for the Scala 2.13 build too.
+case class NewtypeUserId(value: String) extends AnyVal
+
+case class WithNewtypeMapKey(counts: Map[NewtypeUserId, Int])
+
 case class RecursiveTree(value: Int, children: List[RecursiveTree])
 
 // Value class
