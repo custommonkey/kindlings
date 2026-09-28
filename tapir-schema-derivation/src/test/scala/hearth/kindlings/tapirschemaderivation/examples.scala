@@ -34,6 +34,20 @@ case class WithCollections(tags: List[String], counts: Vector[Int])
 
 case class WithMap(metadata: Map[String, String])
 
+// `UserId` is opaque outside this object, so `KindlingsSchema.derived` for
+// `WithOpaqueMapKey` below can only work if it lets a user-supplied
+// `Schema[Map[UserId, Int]]` through, rather than requiring the key to be a
+// `String` structurally.
+object OpaqueKeyExample {
+  opaque type UserId = String
+  object UserId {
+    def apply(value: String): UserId = value
+    def raw(id: UserId): String = id
+  }
+}
+
+case class WithOpaqueMapKey(counts: Map[OpaqueKeyExample.UserId, Int])
+
 case class RecursiveTree(value: Int, children: List[RecursiveTree])
 
 // Value class

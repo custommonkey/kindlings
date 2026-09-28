@@ -25,14 +25,19 @@ trait SchemaUseImplicitWhenAvailableRuleImpl {
 
     def apply[A: SchemaCtx]: MIO[Rule.Applicability[Expr[Schema[A]]]] =
       Log.info(s"Attempting to use implicit Schema for ${Type[A].prettyPrint}") >> {
-        // Skip summoning for Map types — Tapir provides built-in Schema[Map[K,V]] but we need structural derivation
-        val isMapType: Boolean = Type[A] match {
-          case IsMap(_) => true
-          case _        => false
+        // Skip summoning for String-keyed Map types -- Tapir provides a built-in Schema[Map[String, V]]
+        // but we need structural derivation (e.g. to respect the mapsAreArrays JSON config). Maps keyed
+        // by anything else (e.g. an opaque/newtype key) have no such built-in schema to avoid, so let a
+        // user-supplied Schema[Map[K, V]] win via the normal implicit search below.
+        val isStringKeyedMapType: Boolean = Type[A] match {
+          case IsMap(isMap) =>
+            implicit val stringT: Type[String] = TsTypes.StringType
+            isMap.value.Key <:< Type[String]
+          case _ => false
         }
-        if (isMapType) {
-          Log.info(s"Map type detected, skipping summoning for ${Type[A].prettyPrint}") >>
-            MIO.pure(Rule.yielded(s"Map type ${Type[A].prettyPrint} requires structural derivation"))
+        if (isStringKeyedMapType) {
+          Log.info(s"String-keyed map type detected, skipping summoning for ${Type[A].prettyPrint}") >>
+            MIO.pure(Rule.yielded(s"String-keyed map type ${Type[A].prettyPrint} requires structural derivation"))
         } else if (sctx.derivedType.exists(_.Underlying =:= Type[A])) {
           MIO.pure(Rule.yielded(s"The type ${Type[A].prettyPrint} is the type being derived, skipping implicit search"))
         } else {
