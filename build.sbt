@@ -1066,6 +1066,7 @@ lazy val integrationTests = projectMatrix
     xmlDerivation,
     sconfigDerivation,
     tapirSchemaDerivation,
+    parser,
     refinedIntegration,
     catsIntegration
   )
